@@ -10,7 +10,7 @@
 </head>
 <body onload='init()'>
 
-<h1>Coronavirus (Mutations) Timeline in the U.S</h1>
+<h1>Covid-19 Data in the United States from 2020-2022</h1>
 <br><br>
 <b>Type: </b>
 <select id="selectButton"></select>
@@ -21,10 +21,10 @@
 
         //------------------------1. PREPARATION------------------------//
         //-----------------------------SVG------------------------------//
-        const width = 960;
+        const width = 1000;
         const height = 500;
         const margin = 0;
-        const padding = 5;
+        const padding = 10;
         const adj = 100;
         // we are appending SVG first
         const svg = d3.select("div#container").append("svg")
@@ -41,7 +41,7 @@
         //----------DATETIME---------
         const timeConv = d3.timeParse("%Y-%m-%d");
         bisectDate = d3.bisector(function(d) { return d.date; }).left; // **
-        formatDate = d3.timeFormat("%Y-%m-%d")
+        formatDate = d3.timeFormat("%B %Y")
 
         // --------- DATA ----------
         const data = await d3.csv("us-national2.csv");
@@ -57,7 +57,7 @@
 
 
         // --------- SELECT BUTTON ----------
-        const allGroup = ["cases", "deaths", "cases_avg", "deaths_avg"];
+        const allGroup = ["cases", "deaths", "cases_avg"];
         d3.select("#selectButton")
             .selectAll('myOptions')
             .data(allGroup)
