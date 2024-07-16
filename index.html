@@ -44,12 +44,14 @@
       scene.render();
     }
 
-    function renderOverview() {
-      d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+    async function renderOverview() {
+    //   d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
+        const data1 = await d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv');
+
 
         svg.selectAll("circle")
-          .data(data)
+          .data(data1)
           .enter()
           .append("circle")
           .attr("cx", (d, i) => (i % 10) * 80 + 40)
@@ -58,11 +60,11 @@
           .attr("fill", "steelblue")
           .append("title")
           .text(d => `${d.Title}\nRating: ${d.Rating}`);
-      });
+    //   });
     }
 
     function renderTop10() {
-        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated').then(data => {
         const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10);
 
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
@@ -72,9 +74,9 @@
           .enter()
           .append("rect")
           .attr("x", (d, i) => i * 80 + 40)
-          .attr("y", d => 400 - d.Rating * 40)
+          .attr("y", d => 400 - d['Rating'] * 40)
           .attr("width", 40)
-          .attr("height", d => d.Rating * 40)
+          .attr("height", d => d['Rating'] * 40)
           .attr("fill", "orange")
           .append("title")
           .text(d => `${d.Title}\nRating: ${d.Rating}`);
