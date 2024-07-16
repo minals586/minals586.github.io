@@ -1,4 +1,4 @@
-Number	Movie Name	Release Date	Duration	Age Rating	# of People Voted	IMDb Rating
+Number  Title  Release Date    Duration    Age # of People Voted   Rating
 1	The Shawshank Redemption	1994	2h 22m	R	2.8M	9.3
 2	The Godfather	1972	2h 55m	R	2M	9.2
 3	The Dark Knight	2008	2h 32m	PG-13	2.8M	9
@@ -35,7 +35,7 @@ Number	Movie Name	Release Date	Duration	Age Rating	# of People Voted	IMDb Rating
 34	Django Unchained	2012	2h 45m	R	1.7M	8.5
 35	Whiplash	2014	1h 46m	R	952K	8.5
 36	Parasite	2019	2h 12m	R	911K	8.5
-37	Léon: The Professional	1994	1h 50m	R	1.2M	8.5
+37	Lï¿½on: The Professional	1994	1h 50m	R	1.2M	8.5
 38	The Departed	2006	2h 31m	R	1.4M	8.5
 39	Alien	1979	1h 57m	R	931K	8.5
 40	The Prestige	2006	2h 10m	PG-13	1.4M	8.5
