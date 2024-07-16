@@ -1,4 +1,4 @@
-Number	Movie Name	Release Date	Duration	Age Rating	# of People Voted	IMDb Rating
+Number	Title	Release Date	Duration	Age_Rating	# of People Voted	Rating
 1	The Shawshank Redemption	1994	2h 22m	R	2.8M	9.3
 2	The Godfather	1972	2h 55m	R	2M	9.2
 3	The Dark Knight	2008	2h 32m	PG-13	2.8M	9
