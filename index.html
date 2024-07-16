@@ -74,73 +74,73 @@
     }
 
     async function renderTop10() {
-        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
+
+    const svg = d3.select("#content").append("svg").attr("width", 900).attr("height", 600);
+    const data = await d3.dsv("\t", "IMDbTopRated.csv");
+
+    data.forEach(d => {
+        d.Rating = +d.Rating;
+    });
+
+    const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10); // Changed to 10
+
+    // Set up scales
+    const xScale = d3.scaleBand()
+        .domain(top10.map(d => d.Title))
+        .range([50, 800])
+        .padding(0.1);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, 10])
+        .range([400, 0]);
+
+    // Add bars to the chart
+    svg.selectAll("rect")
+        .data(top10)
+        .enter()
+        .append("rect")
+        .attr("x", d => xScale(d.Title))
+        .attr("y", d => yScale(d.Rating))
+        .attr("width", xScale.bandwidth())
+        .attr("height", d => 400 - yScale(d.Rating))
+        .attr("fill", "orange")
+        .append("title")
+        .text(d => `${d.Title}\nRating: ${d.Rating}`);
+
+    // Add X axis
+    const xAxis = svg.append("g")
+        .attr("transform", "translate(0, 410)")
+        .call(d3.axisBottom(xScale))
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end");
+
+    // Add Y axis
+    svg.append("g")
+        .attr("transform", "translate(50, 10)")
+        .call(d3.axisLeft(yScale));
+
+    // Add X axis label
+    svg.append("text")
+        .attr("transform", "translate(400, 550)")
+        .style("text-anchor", "middle")
+        .text("Movie Title");
+
+    // Add Y axis label
+    svg.append("text")
+        .attr("transform", "translate(20, 200) rotate(-90)")
+        .style("text-anchor", "middle")
+        .text("Rating");
+}
+
+
+    async function renderRatingDistribution() {
+        // d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+        // const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 500);
+
+        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 500);
         const data = await d3.dsv("\t", "IMDbTopRated.csv");
-        
-        // const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10);
-        // console.log(data);
-
-
-        // svg.selectAll("rect")
-        //   .data(top10)
-        //   .enter()
-        //   .append("rect")
-        //   .attr("x", (d, i) => i * 80 + 40)
-        //   .attr("y", d => 400 - d['Rating'] * 40)
-        //   .attr("width", 40)
-        //   .attr("height", d => d['Rating'] * 40)
-        //   .attr("fill", "orange")
-        //   .append("title")
-        //   .text(d => `${d.Title}\nRating: ${d.Rating}`);
-
-          // Parse ratings as numbers
-        data.forEach(d => {
-            d.Rating = +d.Rating;
-        });
-
-        const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10);
-        console.log(top10);
-
-        // Set up scales
-        const xScale = d3.scaleBand()
-            .domain(top10.map(d => d.Title))
-            .range([0, 800])
-            .padding(0.1);
-
-        const yScale = d3.scaleLinear()
-            .domain([0, 10])
-            .range([400, 0]);
-
-        // Add bars to the chart
-        svg.selectAll("rect")
-            .data(top10)
-            .enter()
-            .append("rect")
-            .attr("x", (d, i) => xScale(d.Title))
-            .attr("y", d => yScale(d.Rating))
-            .attr("width", xScale.bandwidth())
-            .attr("height", d => 400 - yScale(d.Rating))
-            .attr("fill", "orange")
-            .append("title")
-            .text(d => `${d.Title}\nRating: ${d.Rating}`);
-
-        // Add x-axis
-        svg.append("g")
-            .attr("transform", "translate(0, 400)")
-            .call(d3.axisBottom(xScale))
-            .selectAll("text")
-            .attr("transform", "rotate(-45)")
-            .style("text-anchor", "end");
-
-        // Add y-axis
-        svg.append("g")
-            .call(d3.axisLeft(yScale));
-        
-    }
-
-    function renderRatingDistribution() {
-        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
-        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
+        console.log(data);
 
         const xScale = d3.scaleLinear()
           .domain([0, 10])
@@ -174,7 +174,20 @@
         svg.append("g")
           .attr("transform", "translate(50,0)")
           .call(d3.axisLeft(yScale));
-      });
+
+                  // Add X axis label
+        svg.append("text")
+            .attr("transform", "translate(400, 420)")
+            .style("text-anchor", "middle")
+            .text("Rating");
+
+        // Add Y axis label
+        svg.append("text")
+            .attr("transform", "translate(20, 200) rotate(-90)")
+            .style("text-anchor", "middle")
+            .text("Frequency");
+            
+    //   });
     }
 
     document.getElementById("prev").addEventListener("click", () => {
