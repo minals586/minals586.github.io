@@ -73,7 +73,7 @@
         .attr("fill", "black");
     }
 
-    function renderTop10() {
+    async function renderTop10() {
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
         const data = await d3.dsv("\t", "IMDbTopRated.csv");
         
@@ -98,10 +98,7 @@
             d.Rating = +d.Rating;
         });
 
-        // Sort the data by rating and get the top 10
         const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10);
-
-        // Log top 10 data to console
         console.log(top10);
 
         // Set up scales
