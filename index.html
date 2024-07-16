@@ -47,6 +47,7 @@
     async function renderOverview() {
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
         const data = await d3.csv("IMDbTopRated.csv");
+        console.log(data);
 
         svg.selectAll("circle")
           .data(data)
