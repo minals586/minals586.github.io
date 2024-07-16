@@ -1,446 +1,140 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta content="GitLab Pages" name="generator">
-    <title>Coronavirus Timeline - US</title>
-    <script src="https://d3js.org/d3.v6.min.js" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/1.12.1/d3-annotation.min.js"></script>
-    <link href="style.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>IMDb Top 50 Narrative Visualization</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
-<body onload='init()'>
+<body>
+  <div id="container">
+    <div id="nav">
+      <button id="prev">Previous</button>
+      <button id="next">Next</button>
+    </div>
+    <div id="content"></div>
+  </div>
 
-<h1>Covid-19 Data in the United States from 2020-2022</h1>
-<br><br>
-<b>Type: </b>
-<select id="selectButton"></select>
+  <script>
+    const scenes = [
+      {
+        title: "Overview of IMDb Top 50",
+        description: "This scene provides an overview of the IMDb Top 50 movies.",
+        render: renderOverview
+      },
+      {
+        title: "Top 10 Movies by Rating",
+        description: "This scene highlights the top 10 movies by their IMDb rating.",
+        render: renderTop10
+      },
+      {
+        title: "Distribution of Ratings",
+        description: "This scene shows the distribution of ratings among the top 50 movies.",
+        render: renderRatingDistribution
+      }
+    ];
 
-<div class="svg-container" id="container"></div>
-<script>
-    async function init() {
+    let currentSceneIndex = 0;
 
-        //------------------------1. PREPARATION------------------------//
-        //-----------------------------SVG------------------------------//
-        const width = 1000;
-        const height = 500;
-        const margin = 0;
-        const padding = 10;
-        const adj = 100;
-        // we are appending SVG first
-        const svg = d3.select("div#container").append("svg")
-            .attr("preserveAspectRatio", "xMinYMin meet")
-            .attr("viewBox", "-"
-                + adj + " -"
-                + adj + " "
-                + (width + adj * 3) + " "
-                + (height + adj * 3))
-            .style("padding", padding)
-            .style("margin", margin)
-            .classed("svg-content", true);
-
-        //----------DATETIME---------
-        const timeConv = d3.timeParse("%Y-%m-%d");
-        bisectDate = d3.bisector(function(d) { return d.date; }).left; // **
-        formatDate = d3.timeFormat("%B %Y")
-
-        // --------- DATA ----------
-        const data = await d3.csv("us-national2.csv");
-
-        // make sure all the fields are in the right format
-        data.forEach(function(d) {
-            d.date = timeConv(d.date);
-            d.cases = +d.cases;
-            d.deaths = +d.deaths
-            d.cases_avg = +d.cases_avg
-            d.deaths_avg = +d.deaths_avg
-        });
-
-
-        // --------- SELECT BUTTON ----------
-        const allGroup = ["cases", "deaths", "cases_avg"];
-        d3.select("#selectButton")
-            .selectAll('myOptions')
-            .data(allGroup)
-            .enter()
-            .append('option')
-            .text(function (d) {
-                return d;
-            })
-            .attr("value", function (d) {
-                return d;
-            });
-
-        // create the tooltip display
-        var focus = svg.append("g")
-            .style("display", "none");
-
-        var state = "cases"
-
-        //----------------------------SCALES----------------------------//
-        const colorScale = d3.scaleOrdinal()
-            .domain(allGroup)
-            .range(["#66c2a5",
-                "#fc8d62",
-                "#8da0cb",
-                "#e78ac3",
-                "#a6d854",
-                "#ffd92f",
-                "#e5c494",
-                "#b3b3b3"])
-
-        var xScale = d3.scaleTime().range([0, width]);
-        var yScale = d3.scaleLinear().rangeRound([height, 0]);
-
-        xScale.domain(d3.extent(data, function (d) {
-            return d.date;
-        }));
-
-        const max = d3.max(data, function(d) { return +d.cases; });
-        yScale.domain([0, max]);
-
-        //-----------------------------AXES-----------------------------//
-        const yaxis = d3.axisLeft()
-            .scale(yScale);
-
-        const xaxis = d3.axisBottom()
-            .ticks(d3.timeMonth.every(2))
-            .tickFormat(d3.timeFormat('%Y-%m'))
-            .scale(xScale);
-
-        //----------------------------LINES-----------------------------//
-        let slices = data.columns.slice(1).map(function(id) {
-            return {
-                id: id,
-                values: data.map(function(d){
-                    return {
-                        date: d.date,
-                        measurement: +d[id]
-                    };
-                })
-            };
-        });
-
-        // goofy way of getting the index of where "cases" is
-        // only accepts this weird format for some reason with path
-        var index = slices.map(function(el) {
-            return el.id;
-        }).indexOf(state);
-        slices = [slices[index]]
-
-
-        const line = d3.line()
-            .x(function(d) { return xScale(d.date); })
-            .y(function(d) { return yScale(d.measurement); });
-
-        let lines = svg
-            .append("g")
-            .append("path")
-            .data(slices)
-            .attr("d", function(d) { return line(d.values); })
-            .attr("stroke", function(d){ return colorScale("cases"); })
-            .style("stroke-width", 0.7)
-            .style("fill", "none")
-            .style("shape-rendering", "crispEdges")
-            .style("pointer-events", "all")
-            .on("mouseover", function() { focus.style("display", null); })
-            .on("mouseout", function() { focus.style("display", "none"); })
-            .on("mousemove", mousemove);
-
-
-        //------ AXIS ---------
-        svg.append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xaxis);
-
-        svg.append("g")
-            .attr("class", "axis axis--y")
-            .call(yaxis)
-            .append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("dy", ".75em")
-            .attr("y", 6)
-            .style("text-anchor", "end")
-            .text("Number of " + state);
-
-        // ------- TOOLTIP --------------
-
-        // handle the tooltip mouseover events
-        function mousemove(event) {
-            // console.log(d3.pointer(event))
-            var x0 = xScale.invert(d3.pointer(event)[0]);
-            var i = bisectDate(data, x0, 1);
-            var d0 = data[i - 1];
-            var d1 = data[i];
-            var d = x0 - d0.date > d1.date - x0 ? d1 : d0;
-
-            focus.select("circle.y")
-                .attr("transform",
-                    "translate(" + xScale(d.date) + "," +
-                    yScale(d[state]) + ")");
-
-            focus.select("text.y1")
-                .attr("transform",
-                    "translate(" + xScale(d.date) + "," +
-                    yScale(d[state]) + ")")
-                .text(d[state])
-                .style("stroke", "white")
-                .style("stroke-width", "3.5px")
-                .style("opacity", 0.8)
-                .attr("dx", 8)
-                .attr("dy", "-.3em")
-                .style("font-size", "120%")
-
-            focus.select("text.y2")
-                .attr("transform",
-                    "translate(" + xScale(d.date) + "," +
-                    yScale(d[state]) + ")")
-                .text(d[state])
-                .style("stroke", "#706f6f")
-                .style("font-size", "120%")
-                .attr("dx", 8)
-                .attr("dy", "-.3em");
-
-            focus.select("text.y3")
-                .attr("transform",
-                    "translate(" + xScale(d.date) + "," +
-                    yScale(d[state]) + ")")
-                .text(formatDate(d.date))
-                .style("stroke", "white")
-                .style("stroke-width", "3.5px")
-                .style("opacity", 0.8)
-                .attr("dx", 8)
-                .attr("dy", "1em")
-                .style("font-size", "120%")
-
-            focus.select("text.y4")
-                .attr("transform",
-                    "translate(" + xScale(d.date) + "," +
-                    yScale(d[state]) + ")")
-                .text(formatDate(d.date))
-                .style("stroke", "#706f6f")
-                .attr("dx", 8)
-                .attr("dy", "1em")
-                .style("font-size", "120%")
-
-        }
-
-        // append the circle at the intersection               
-        focus.append("circle")                                 
-            .attr("class", "y")                                
-            .style("fill", "none")
-            .style("stroke", "blue")                           
-            .attr("r", 12);
-
-
-        // place the value at the intersection
-        focus.append("text")
-            .attr("class", "y1")
-            .style("stroke", "white")
-            .style("stroke-width", "3.5px")
-            .style("opacity", 0.8)
-            .attr("dx", 8)
-            .attr("dy", "-.3em");
-
-        focus.append("text")
-            .attr("class", "y2")
-            .attr("dx", 8)
-            .attr("dy", "-.3em");
-
-        // place the date at the intersection
-        focus.append("text")
-            .attr("class", "y3")
-            .style("stroke", "white")
-            .style("stroke-width", "3.5px")
-            .style("opacity", 0.8)
-            .attr("dx", 8)
-            .attr("dy", "1em");
-
-        focus.append("text")
-            .attr("class", "y4")
-            .attr("dx", 8)
-            .attr("dy", "1em");
-
-
-        //---------EVENTS----------
-        function update(selectedGroup) {
-            // update our global state with the selected group
-            state = selectedGroup
-
-            let slices = data.columns.slice(1).map(function(id) {
-                return {
-                    id: id,
-                    values: data.map(function(d){
-                        return {
-                            date: d.date,
-                            measurement: +d[id]
-                        };
-                    })
-                };
-            });
-
-            // goofy way of getting the index of where "selectedGroup" is
-            var index = slices.map(function(el) {
-                return el.id;
-            }).indexOf(selectedGroup);
-            slices = [slices[index]]
-
-            // update BOTH axis
-            const max = d3.max(data, function(d) { return +d[selectedGroup]; });
-            yScale = d3.scaleLinear().rangeRound([height, 0]).domain([0, max]);
-            const yaxis = d3.axisLeft()
-                .scale(yScale);
-
-            svg.selectAll(".axis.axis--y").transition()
-                .duration(750)
-                .call(customYAxis)
-                .on("start", function(){
-                    svg.select(".axis.axis--y").remove();
-                })
-
-            svg.selectAll(".axis.axis--x").transition()
-                .duration(750)
-                .call(xaxis);
-
-            function customYAxis(g) {
-                svg.call(yaxis)
-                svg.select(".domain").remove();
-                svg.selectAll("line")
-                    .attr("stroke", "#777")
-                    .attr("opacity", .5);
-            }
-
-            // for whatever reason, need to update the scale when i update the axis code above
-            const line = d3.line()
-                .x(function(d) { return xScale(d.date); })
-                .y(function(d) { return yScale(d.measurement); });
-
-            // Give these new data to update line
-            lines
-                .data(slices)
-                .transition()
-                .duration(1000)
-                .attr("d", function(d) { return line(d.values); })
-                .attr("stroke", function (d) {
-                    return colorScale(selectedGroup)
-                })
-
-            svg.select(".annotation-group").remove();
-
-            // selector of which annotations to draw
-            if (index === 0 || index === 2) {
-                draw_annotations(1);
-            } else {
-                draw_annotations(2);
-            }
-        }
-
-        function draw_annotations(num) {
-
-            let annotations = [];
-            if (num === 1) {
-                annotations = [{
-                    note: {label: "The World Health Organization declares COVID-19 a pandemic."},
-                    subject: {
-                        y1: 250,
-                        y2: height - 20
-                    },
-                    y: 250,
-                    data: {x: "3/11/2020"} //position the x based on an x scale
-                },
-                    {
-                        note: {label: "The Delta variant becomes the dominant variant in the U.S."},
-                        subject: {
-                            y1: 250,
-                            y2: height - 20
-                        },
-                        y: 250,
-                        data: {x: "6/1/2021"}
-                    },
-                    {
-                        note: {label: "World Health Organization classifies a new variant: Omicron."},
-                        subject: {
-                            y1: 250,
-                            y2: height - 20
-                        },
-                        y: 250,
-                        data: {x: "11/26/2021"}
-                    }
-                ]
-            } else {
-                annotations = [{
-                    note: { label: "United States coronavirus (COVID-19) death toll surpasses 100,000." },
-                    subject: {
-                        y1: 250,
-                        y2: height - 20
-                    },
-                    y: 250,
-                    data: { x: "5/28/2020"} //position the x based on an x scale
-                },
-                    {
-                        note: { label: "United States coronavirus (COVID-19) death toll surpasses 200,000." },
-                        subject: {
-                            y1: 250,
-                            y2: height - 20
-                        },
-                        y: 250,
-                        data: { x: "7/22/2020"}
-                    },
-                    {
-                        note: { label: "U.S.COVID-19 death toll surpasses 500,000."},
-                        subject: {
-                            y1: 100,
-                            y2: height - 20
-                        },
-                        y: 100,
-                        data: { x: "2/21/2021"}
-                    }
-                ]
-            }
-
-            //An example of taking the XYThreshold and merging it
-            //with custom settings so you don't have to
-            //repeat yourself in the annotations Objects
-            const type = d3.annotationCustomType(
-                d3.annotationXYThreshold,
-                {"note":{
-                        "lineType":"none",
-                        "orientation": "top",
-                        "align":"middle"}
-                }
-            )
-
-            const makeAnnotations = d3.annotation()
-                .type(type)
-                //Gives you access to any data objects in the annotations array
-                .accessors({
-                    x: function(d){ return xScale(new Date(d.x))},
-                    y: function(d){ return yScale(d.y) }
-                })
-                .annotations(annotations)
-                .textWrap(30)
-
-            d3.select("svg")
-                .append("g")
-                .attr("class", "annotation-group")
-                .call(makeAnnotations)
-        }
-
-
-        // When the button is changed, run the updateChart function
-        d3.select("#selectButton").on("change", function (d) {
-            // recover the option that has been chosen
-            const selectedOption = d3.select(this).property("value")
-            // run the updateChart function with this selected option
-            update(selectedOption)
-        });
-
-        // ----- ANNOTATIONS -----
-        /* Code below relevant for annotations */
-        draw_annotations(1)
-
-
+    function updateScene(index) {
+      const scene = scenes[index];
+      d3.select("#content").html("");
+      d3.select("#content").append("h2").text(scene.title);
+      d3.select("#content").append("p").text(scene.description);
+      scene.render();
     }
-</script>
+
+    function renderOverview() {
+      d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
+
+        svg.selectAll("circle")
+          .data(data)
+          .enter()
+          .append("circle")
+          .attr("cx", (d, i) => (i % 10) * 80 + 40)
+          .attr("cy", (d, i) => Math.floor(i / 10) * 80 + 40)
+          .attr("r", 30)
+          .attr("fill", "steelblue")
+          .append("title")
+          .text(d => `${d.Title}\nRating: ${d.Rating}`);
+      });
+    }
+
+    function renderTop10() {
+        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+        const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10);
+
+        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
+
+        svg.selectAll("rect")
+          .data(top10)
+          .enter()
+          .append("rect")
+          .attr("x", (d, i) => i * 80 + 40)
+          .attr("y", d => 400 - d.Rating * 40)
+          .attr("width", 40)
+          .attr("height", d => d.Rating * 40)
+          .attr("fill", "orange")
+          .append("title")
+          .text(d => `${d.Title}\nRating: ${d.Rating}`);
+      });
+    }
+
+    function renderRatingDistribution() {
+        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
+
+        const xScale = d3.scaleLinear()
+          .domain([0, 10])
+          .range([50, 750]);
+
+        const histogram = d3.histogram()
+          .domain(xScale.domain())
+          .thresholds(xScale.ticks(10))
+          .value(d => d.Rating);
+
+        const bins = histogram(data);
+
+        const yScale = d3.scaleLinear()
+          .domain([0, d3.max(bins, d => d.length)])
+          .range([400, 50]);
+
+        svg.selectAll("rect")
+          .data(bins)
+          .enter()
+          .append("rect")
+          .attr("x", d => xScale(d.x0))
+          .attr("y", d => yScale(d.length))
+          .attr("width", d => xScale(d.x1) - xScale(d.x0) - 1)
+          .attr("height", d => 400 - yScale(d.length))
+          .attr("fill", "green");
+
+        svg.append("g")
+          .attr("transform", "translate(0,400)")
+          .call(d3.axisBottom(xScale));
+
+        svg.append("g")
+          .attr("transform", "translate(50,0)")
+          .call(d3.axisLeft(yScale));
+      });
+    }
+
+    document.getElementById("prev").addEventListener("click", () => {
+      if (currentSceneIndex > 0) {
+        currentSceneIndex--;
+        updateScene(currentSceneIndex);
+      }
+    });
+
+    document.getElementById("next").addEventListener("click", () => {
+      if (currentSceneIndex < scenes.length - 1) {
+        currentSceneIndex++;
+        updateScene(currentSceneIndex);
+      }
+    });
+
+    updateScene(currentSceneIndex);
+  </script>
 </body>
 </html>
