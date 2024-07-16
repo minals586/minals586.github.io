@@ -2,10 +2,35 @@
 <html>
 
 <head>
+    <title>CS416 Project</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <h1>CS416 Project - Create a Narrative Visualization</h1>
+    <h4>Amazon Top 50 Bestselling Books 2009 - 2019</h4>
+    <ul style="font-size:12pt">
+      <li> Dataset: Amazon Top 50 Bestselling Books 2009 - 2019 </li>
+      <li> Data source: https://www.kaggle.com/sootersaalu/amazon-top-50-bestselling-books-2009-2019?select=bestsellers+with+categories.csv </li>
+    </ul>
+    
+    <button onclick="init2(2020)">2009-2019</button>
+    <button onclick="next()">Next</button>
+    <button onclick="init2(2009)">2009</button>
+    <button onclick="init2(2010)">2010</button>
+    <button onclick="init2(2011)">2011</button>
+    <button onclick="init2(2012)">2012</button>
+    <button onclick="init2(2013)">2013</button>
+    <button onclick="init2(2014)">2014</button>
+    <button onclick="init2(2015)">2015</button>
+    <button onclick="init2(2016)">2016</button>
+    <button onclick="init2(2017)">2017</button>
+    <button onclick="init2(2018)">2018</button>
+    <button onclick="init2(2019)">2019</button>
+    
+    <svg width="900" height="600"> </svg>
+    <div id="my_dataviz"> </div>
+
 </body>
 
 </html>
