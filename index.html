@@ -49,16 +49,28 @@
         const data = await d3.dsv("\t", "IMDbTopRated.csv");
         console.log(data);
 
-        svg.selectAll("circle")
-          .data(data)
-          .enter()
-          .append("circle")
-          .attr("cx", (d, i) => (i % 10) * 80 + 40)
-          .attr("cy", (d, i) => Math.floor(i / 10) * 80 + 40)
-          .attr("r", 30)
-          .attr("fill", "steelblue")
-          .append("title")
-          .text(d => d.Title);
+        const circles = svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", (d, i) => (i % 10) * 80 + 40)
+        .attr("cy", (d, i) => Math.floor(i / 10) * 80 + 40)
+        .attr("r", 30)
+        .attr("fill", "steelblue");
+
+      circles.append("title")
+        .text(d => d.Title);
+
+      svg.selectAll("text")
+        .data(data)
+        .enter()
+        .append("text")
+        .attr("x", (d, i) => (i % 10) * 80 + 40)
+        .attr("y", (d, i) => Math.floor(i / 10) * 80 + 40 + 40) // Adjust the y position to be below the circles
+        .attr("text-anchor", "middle")
+        .text(d => d.Title)
+        .attr("font-size", "10px")
+        .attr("fill", "black");
     }
 
     function renderTop10() {
