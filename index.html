@@ -8,9 +8,9 @@
 
 <body>
     <h1>CS416 Project - Create a Narrative Visualization</h1>
-    <h4>Amazon Top 50 Bestselling Books 2009 - 2019</h4>
+    <h4>Top 50 IMDb Movies</h4>
     <ul style="font-size:12pt">
-      <li> Dataset: Amazon Top 50 Bestselling Books 2009 - 2019 </li>
+      <li> Dataset: Top 50 IMDb Movies</li>
       <li> Data source: https://www.kaggle.com/sootersaalu/amazon-top-50-bestselling-books-2009-2019?select=bestsellers+with+categories.csv </li>
     </ul>
     
@@ -30,6 +30,124 @@
     
     <svg width="900" height="600"> </svg>
     <div id="my_dataviz"> </div>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    
+      
+    <script>
+      var yourGlobalVariable=2020;
+      
+      const svg = d3.select("svg"),
+            margin = 100,
+            width = svg.attr("width") - margin,
+            height = svg.attr("height") - margin
+
+
+async function init1(theYear) {
+
+   var x = d3.scaleBand()    .domain([2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]).range ([0, width/2-15]);
+   var y = d3.scaleLinear().domain([4.0,4.8]).range ([200,15]);
+   var cols = d3.scaleLinear()
+           .domain([4.5,4.6,4.7,4.9]).range(['blue','white','pink','red']);
+  
+  const data1 = await d3.csv('https://raw.githubusercontent.com/mz4987/mz4987.github.io/main/2009-2019');
+
+d3.select('svg')
+  .append('g').attr("transform", "translate(" + 50 + "," + 50 + ")")
+  .selectAll('rect')
+  .data(data1)
+  .enter()
+  .append("rect")
+  .attr("x", function(d) { return x(d.Year); })
+  .attr("y", function(d) { return y(d.User_Rating); })
+  .attr("width", x.bandwidth()-2)
+  .attr("height", function(d) { return height - 300- y(d.User_Rating); })
+  .style("fill", function(d,i) { return cols(d.User_Rating); })
+  .attr("width", x.bandwidth()-4)
+  .attr("stroke", 'black')
+  .attr('stroke-width', function(d){ if (d.Year == theYear) {return '5px';}return '1px';});
+
+  var y_axis = d3.axisLeft(y).tickValues([4.2,4.4,4.5,4.6,4.8]);
+  d3.select("svg").append("g").attr("transform", "translate(" + 50 + "," + 50 + ")").call(y_axis);
+
+  var x_axis = d3.axisBottom(x);
+  d3.select("svg").append("g").attr("transform", "translate(" + 50 + "," +(height - 250)+ ")").call(x_axis);
+
+
+  var x = d3.scaleBand()
+          .domain([2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]).range ([width/2+15, width]);
+  var y = d3.scaleLinear().domain([5.0,16.0]).range ([200,15]);
+  var cols = d3.scaleLinear().domain([10,15,20]).range(['blue','pink','red']);
+
+
+d3.select('svg')
+  .append("text")
+  .attr("class", "tittle")
+    .attr("x", width/4)
+    .attr("y", 25)
+    .html("Amazon Top 50 Bestselling Books average user rating and price from 2009 to 2019");
+  
+ d3.select('svg')
+   .append("text").attr("class", "notes")
+   .attr("x", width/2-10)
+   .attr("y", 40)
+   .html('* Click button to review detail of selected year');
+  
+d3.select('svg').append('g')
+  .attr("transform", "translate(" + (50)+"," + 50 + ")")
+  .selectAll('rect')
+  .data(data1)
+  .enter()
+  .append("rect")
+  .attr("x", function(d) { return x(d.Year); })
+  .attr("y", function(d) { return y(d.Price); })
+  .attr("width", x.bandwidth()-4)
+  .attr("stroke",'black')
+  .attr('stroke-width', function(d){ if (d.Year == theYear) {return '5px';}return '1px';})
+  .attr("height", function(d) { return height - 300- y(d.Price); })
+  .style("fill", function(d,i) { return cols(d.Price); });
+
+  var y_axis = d3.axisLeft(y).tickValues([6,8,10,12,14,16]);
+  d3.select("svg").append("g")
+    .attr("transform", "translate(" + (50 + width/2+15)+ "," + 50 + ")").call(y_axis);
+
+  var x_axis = d3.axisBottom(x);
+  d3.select("svg").append("g")
+    .attr("transform", "translate(" + 50 + "," +(height - 250)+ ")").call(x_axis);
+  
+
+
+   d3.select('svg').append('text')
+           .attr("class", "event-text")
+           .html( 'Amazon Top 50 Bestselling Books User Rating')
+           .attr("x", 50)
+          .attr("y", 285);
+  
+  d3.select('svg').append('text')
+    .attr("class", "event-text")
+           .html( 'Amazon Top 50 Bestselling Books Price')
+          .attr("x", 470)
+          .attr("y", 285);
+  
+  if (theYear<2020){
+        d3.select('svg').append('text')
+          .attr("class", "event-text")
+          .data(data1.filter(function(d){ return d.Year==theYear;}))
+          .html( function(d) {return 'The ' +theYear+ ' average user rating: '+ parseFloat(d.User_Rating).toFixed(1)+'/5.0';})
+          .attr("x", 50).attr("y", 303);
+
+   
+        d3.select('svg').append('text')
+          .attr("class", "event-text")
+          .data(data1.filter(function(d){ return d.Year==theYear;}))
+          .html( function(d) {return 'The ' +theYear+ ' average price : ' + parseFloat(d.Price).toFixed(1)+' USD';})
+          .attr("x", 470).attr("y", 303);
+      };
+  
+  
+};
+
+</script>
 
 </body>
 
