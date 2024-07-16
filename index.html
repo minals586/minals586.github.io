@@ -45,7 +45,7 @@
     }
 
     function renderOverview() {
-      d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+      d3.csv('https://raw.githubusercontent.com/yourusername/yourrepo/main/imdb_top_50.csv').then(data => {
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
 
         svg.selectAll("circle")
@@ -57,13 +57,13 @@
           .attr("r", 30)
           .attr("fill", "steelblue")
           .append("title")
-          .text(d => `${d.Title}\nRating: ${d.Rating}`);
+          .text(d => `${d["Movie Name"]}\nRating: ${d["IMDb Rating"]}`);
       });
     }
 
     function renderTop10() {
-        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
-        const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10);
+      d3.csv('https://raw.githubusercontent.com/yourusername/yourrepo/main/imdb_top_50.csv').then(data => {
+        const top10 = data.sort((a, b) => b["IMDb Rating"] - a["IMDb Rating"]).slice(0, 10);
 
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
 
@@ -72,17 +72,17 @@
           .enter()
           .append("rect")
           .attr("x", (d, i) => i * 80 + 40)
-          .attr("y", d => 400 - d.Rating * 40)
+          .attr("y", d => 400 - d["IMDb Rating"] * 40)
           .attr("width", 40)
-          .attr("height", d => d.Rating * 40)
+          .attr("height", d => d["IMDb Rating"] * 40)
           .attr("fill", "orange")
           .append("title")
-          .text(d => `${d.Title}\nRating: ${d.Rating}`);
+          .text(d => `${d["Movie Name"]}\nRating: ${d["IMDb Rating"]}`);
       });
     }
 
     function renderRatingDistribution() {
-        d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
+      d3.csv('https://raw.githubusercontent.com/yourusername/yourrepo/main/imdb_top_50.csv').then(data => {
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
 
         const xScale = d3.scaleLinear()
@@ -92,7 +92,7 @@
         const histogram = d3.histogram()
           .domain(xScale.domain())
           .thresholds(xScale.ticks(10))
-          .value(d => d.Rating);
+          .value(d => d["IMDb Rating"]);
 
         const bins = histogram(data);
 
