@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>IMDb Top 50 Narrative Visualization</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
+
 <body>
   <div id="container">
     <div id="nav">
@@ -19,23 +21,20 @@
     const scenes = [
       {
         title: "Overview of IMDb Top 50",
-        description: "This scene provides an overview of the IMDb Top 50 movies.",
-        render: renderOverview
+        description: "Hover over the points to get more information regarding the movie",
+        render: overview
       },
       {
         title: "Top 10 Movies by Rating",
-        description: "This scene highlights the top 10 movies by their IMDb rating.",
-        render: renderTop10
+        render: top10
       },
       {
-        title: "Distribution of Ratings",
-        description: "This scene shows the distribution of ratings among the top 50 movies.",
-        render: renderRatingDistribution
+        title: "Distribution of Top-Rated Movies Over Time",
+        render: distrOverTime
       }
     ];
 
     let currentSceneIndex = 0;
-
     function updateScene(index) {
       const scene = scenes[index];
       d3.select("#content").html("");
@@ -44,150 +43,241 @@
       scene.render();
     }
 
-    async function renderOverview() {
-        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
-        const data = await d3.dsv("\t", "IMDbTopRated.csv");
-        console.log(data);
+    function parseVotes(votes) {
+      if (votes.includes('M')) {
+        return +votes.replace('M', '') * 1e6;
+      } else if (votes.includes('K')) {
+        return +votes.replace('K', '') * 1e3;
+      } else {
+        return +votes;
+      }
+    }
 
-        const circles = svg.selectAll("circle")
+    async function overview() {
+      const data = await d3.dsv("\t", "IMDbTopRated.csv");
+
+      const margin = { top: 20, right: 30, bottom: 50, left: 90 };
+      const width = 900 - margin.left - margin.right;
+      const height = 700 - margin.top - margin.bottom;
+
+      const svg = d3.select("#content").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const xScale = d3.scaleLinear().domain([8.4, 9.4]).range([0, width - 100]);
+      const yScale = d3.scaleLinear().domain([0, d3.max(data, d => parseVotes(d["num_people_voted"]))]).range([height, 0]);
+      const colorScale = d3.scaleOrdinal().domain(["R", "PG-13", "PG", "G", "NR"]).range(["red", "orange", "green", "blue", "Black"]);
+
+      //hover-over feature
+      //https://medium.com/@kj_schmidt/show-data-on-mouse-over-with-d3-js-3bf598ff8fc2
+      const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0)
+        .style("position", "absolute")
+        .style("background", "lightsteelblue")
+        .style("padding", "8px")
+        .style("border-radius", "4px")
+        .style("pointer-events", "none");
+
+      //scatterplot points
+      svg.selectAll("circle")
         .data(data)
         .enter()
         .append("circle")
-        .attr("cx", (d, i) => (i % 10) * 80 + 40)
-        .attr("cy", (d, i) => Math.floor(i / 10) * 80 + 40)
-        .attr("r", 30)
-        .attr("fill", "steelblue");
+        .attr("cx", d => xScale(+d["Rating"]))
+        .attr("cy", d => yScale(parseVotes(d["num_people_voted"])))
+        .attr("r", 7)
+        .attr("fill", d => colorScale(d["Age_Rating"]))
+        .on("mouseover", (event, d) => {
+          tooltip.transition().duration(200).style("opacity", .9);
+          tooltip.html(`Title: ${d["Title"]}<br>Duration: ${d["Duration"]}`)
+            .style("left", (event.pageX + 5) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", () => {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
 
-      circles.append("title")
-        .text(d => d.Title);
-
-      svg.selectAll("text")
-        .data(data)
-        .enter()
-        .append("text")
-        .attr("x", (d, i) => (i % 10) * 80 + 40)
-        .attr("y", (d, i) => Math.floor(i / 10) * 80 + 40 + 40) // Adjust the y position to be below the circles
+      //axes labels
+      svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(xScale));
+      svg.append("g").call(d3.axisLeft(yScale));
+      svg.append("text")
+        .attr("x", (width / 2) - 50)
+        .attr("y", height + margin.bottom - 10)
         .attr("text-anchor", "middle")
-        .text(d => d.Title)
-        .attr("font-size", "10px")
-        .attr("fill", "black");
+        .text("IMDb Rating");
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -margin.left + 10)
+        .attr("text-anchor", "middle")
+        .text("Number of Votes");
+
+      //legend
+      const legend = svg.selectAll(".legend")
+        .data(colorScale.domain())
+        .enter().append("g")
+        .attr("class", "legend")
+        .attr("transform", (d, i) => `translate(-100, ${i * 20 + 500})`);
+      legend.append("rect")
+        .attr("x", width - 18)
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", colorScale);
+      legend.append("text")
+        .attr("x", width - 24)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "end")
+        .text(d => d);
     }
 
-    async function renderTop10() {
+    async function top10() {
 
-    const svg = d3.select("#content").append("svg").attr("width", 900).attr("height", 600);
-    const data = await d3.dsv("\t", "IMDbTopRated.csv");
+      const svg = d3.select("#content").append("svg").attr("width", 900).attr("height", 600);
+      const data = await d3.dsv("\t", "IMDbTopRated.csv");
 
-    data.forEach(d => {
+      data.forEach(d => { //converting rating to number format
         d.Rating = +d.Rating;
-    });
+      });
+      const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10); //getting top 10
 
-    const top10 = data.sort((a, b) => b.Rating - a.Rating).slice(0, 10); // Changed to 10
-
-    // Set up scales
-    const xScale = d3.scaleBand()
+      //scales
+      const xScale = d3.scaleBand()
         .domain(top10.map(d => d.Title))
         .range([50, 800])
         .padding(0.1);
-
-    const yScale = d3.scaleLinear()
-        .domain([0, 10])
+      const yScale = d3.scaleLinear()
+        .domain([8, 10])
         .range([400, 0]);
 
-    // Add bars to the chart
-    svg.selectAll("rect")
+      //bars
+      svg.selectAll("rect")
         .data(top10)
         .enter()
         .append("rect")
         .attr("x", d => xScale(d.Title))
-        .attr("y", d => yScale(d.Rating))
+        .attr("y", d => yScale(d.Rating) + 10)
         .attr("width", xScale.bandwidth())
         .attr("height", d => 400 - yScale(d.Rating))
-        .attr("fill", "orange")
+        .attr("fill", "#ADD8E6")
         .append("title")
-        .text(d => `${d.Title}\nRating: ${d.Rating}`);
 
-    // Add X axis
-    const xAxis = svg.append("g")
+      //rating number annotations
+      svg.selectAll(".rating-label")
+        .data(top10)
+        .enter()
+        .append("text")
+        .attr("class", "rating-label")
+        .attr("x", d => xScale(d.Title) + xScale.bandwidth() / 2)
+        .attr("y", d => yScale(d.Rating) - 0)
+        .attr("text-anchor", "middle")
+        .text(d => d.Rating.toFixed(1))
+        .style("font-size", "12px")
+        .style("fill", "black");
+
+      //axes
+      const xAxis = svg.append("g")
         .attr("transform", "translate(0, 410)")
         .call(d3.axisBottom(xScale))
         .selectAll("text")
         .attr("transform", "rotate(-45)")
         .style("text-anchor", "end");
-
-    // Add Y axis
-    svg.append("g")
+      svg.append("g")
         .attr("transform", "translate(50, 10)")
         .call(d3.axisLeft(yScale));
 
-    // Add X axis label
-    svg.append("text")
-        .attr("transform", "translate(400, 550)")
+      //axes labels
+      svg.append("text")
+        .attr("transform", "translate(400, 520)")
         .style("text-anchor", "middle")
         .text("Movie Title");
-
-    // Add Y axis label
-    svg.append("text")
+      svg.append("text")
         .attr("transform", "translate(20, 200) rotate(-90)")
         .style("text-anchor", "middle")
         .text("Rating");
-}
 
+    }
 
-    async function renderRatingDistribution() {
-        // d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
-        // const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 500);
+    async function distrOverTime() {
 
-        const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 500);
-        const data = await d3.dsv("\t", "IMDbTopRated.csv");
-        console.log(data);
+      const svg = d3.select("#content").append("svg").attr("width", 900).attr("height", 600);
+      const data = await d3.dsv("\t", "IMDbTopRated.csv");
+      const margin = { top: 20, right: 30, bottom: 50, left: 70 };
+      const width = 900 - margin.left - margin.right;
+      const height = 600 - margin.top - margin.bottom;
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const xScale = d3.scaleLinear()
-          .domain([0, 10])
-          .range([50, 750]);
+      //parsing year https://stackoverflow.com/questions/66840038/is-there-a-way-to-convert-a-d3-rollup-created-with-two-keys-to-a-flat-array-of-o
+      const yearRatings = d3.rollup(data, v => d3.mean(v, d => d.Rating), d => d.ReleaseDate);
+      const yearRatingsArray = Array.from(yearRatings, ([key, value]) => ({ key, value }));
 
-        const histogram = d3.histogram()
-          .domain(xScale.domain())
-          .thresholds(xScale.ticks(10))
-          .value(d => d.Rating);
+      //scales
+      const xScale = d3.scaleLinear()
+        .domain(d3.extent(yearRatingsArray, d => +d.key))
+        .range([0, width]);
+      const yScale = d3.scaleLinear()
+        .domain([8.4, 9.4])
+        .range([height, 0]);
 
-        const bins = histogram(data);
+      //scatterplot dots
+      g.selectAll(".dot")
+        .data(yearRatingsArray)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => xScale(d.key))
+        .attr("cy", d => yScale(d.value))
+        .attr("r", 5)
+        .attr("fill", d => d.key >= 1990 ? "red" : "steelblue");
 
-        const yScale = d3.scaleLinear()
-          .domain([0, d3.max(bins, d => d.length)])
-          .range([400, 50]);
+      //axes
+      g.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).tickFormat(d => d))
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", margin.bottom - 10)
+        .attr("text-anchor", "middle")
+        .attr("class", "axis-label")
+        .text("Year");
+      g.append("g")
+        .call(d3.axisLeft(yScale))
+        .append("text")
+        .attr("x", -margin.left)
+        .attr("y", -10)
+        .attr("text-anchor", "middle")
+        .attr("class", "axis-label")
+        .text("Average Rating");
 
-        svg.selectAll("rect")
-          .data(bins)
-          .enter()
-          .append("rect")
-          .attr("x", d => xScale(d.x0))
-          .attr("y", d => yScale(d.length))
-          .attr("width", d => xScale(d.x1) - xScale(d.x0) - 1)
-          .attr("height", d => 400 - yScale(d.length))
-          .attr("fill", "green");
+      //annotation 
+      const annotations = ["**More than 2/3 of the IMDb top 50 are from the ",
+        "last 30 years (see red).",
+        "**However, note that the highest-rated movie",
+        "is  one of the oldest ones."];
+      svg.append("text")
+        .attr("x", width - 300)
+        .attr("y", margin.top + 20)
+        .attr("text-anchor", "start")
+        .attr("font-size", "12px")
+        .attr("fill", "purple")
+        .selectAll("tspan")
+        .data(annotations)
+        .enter().append("tspan")
+        .attr("x", width - 240)
+        .attr("dy", (d, i) => i + 15)
+        .text(d => d);
+      const x1990 = xScale(1990); //http://www.d3noob.org/2013/01/making-dashed-line-in-d3js.html
+      g.append("line")
+        .attr("x1", x1990)
+        .attr("x2", x1990)
+        .attr("y1", 30)
+        .attr("y2", height)
+        .attr("stroke", "purple")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "4,4");
 
-        svg.append("g")
-          .attr("transform", "translate(0,400)")
-          .call(d3.axisBottom(xScale));
-
-        svg.append("g")
-          .attr("transform", "translate(50,0)")
-          .call(d3.axisLeft(yScale));
-
-                  // Add X axis label
-        svg.append("text")
-            .attr("transform", "translate(400, 420)")
-            .style("text-anchor", "middle")
-            .text("Rating");
-
-        // Add Y axis label
-        svg.append("text")
-            .attr("transform", "translate(20, 200) rotate(-90)")
-            .style("text-anchor", "middle")
-            .text("Frequency");
-            
-    //   });
     }
 
     document.getElementById("prev").addEventListener("click", () => {
@@ -203,8 +293,9 @@
         updateScene(currentSceneIndex);
       }
     });
-
     updateScene(currentSceneIndex);
+
   </script>
 </body>
+
 </html>
