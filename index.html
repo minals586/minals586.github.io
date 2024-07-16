@@ -45,12 +45,11 @@
     }
 
     async function renderOverview() {
-    //   d3.csv('https://raw.githubusercontent.com/minals586/minals586.github.io/main/IMDbTopRated.csv').then(data => {
         const svg = d3.select("#content").append("svg").attr("width", 800).attr("height", 400);
         const data = await d3.csv("IMDbTopRated.csv");
 
         svg.selectAll("circle")
-          .data(data1)
+          .data(data)
           .enter()
           .append("circle")
           .attr("cx", (d, i) => (i % 10) * 80 + 40)
@@ -59,9 +58,6 @@
           .attr("fill", "steelblue")
           .append("title")
           .text(d.Title);
-
-        //   .text(d => `${d.Title}\nRating: ${d.Rating}`);
-    //   });
     }
 
     function renderTop10() {
