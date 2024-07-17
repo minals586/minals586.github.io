@@ -44,6 +44,9 @@
     }
 
     function parseVotes(votes) {
+      if (!votes) {
+        return 0; // Return 0 if votes is undefined or null
+      }
       if (votes.includes('M')) {
         return +votes.replace('M', '') * 1e6;
       } else if (votes.includes('K')) {
