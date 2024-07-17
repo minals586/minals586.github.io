@@ -69,6 +69,18 @@
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
+          // Ensure parseVotes function works correctly
+  const maxVotes = d3.max(data, d => {
+    const votes = parseVotes(d["num_people_voted"]);
+    console.log(`Parsed votes: ${votes}`); // Log each parsed vote
+    return votes;
+  });
+
+  if (maxVotes === undefined || isNaN(maxVotes)) {
+    console.error("Error parsing votes. Please check the num_people_voted data.");
+    return;
+  }
+  
       const xScale = d3.scaleLinear().domain([8.4, 9.4]).range([0, width - 100]);
       const yScale = d3.scaleLinear().domain([0, d3.max(data, d => parseVotes(d["num_people_voted"]))]).range([height, 0]);
       const colorScale = d3.scaleOrdinal().domain(["R", "PG-13", "PG", "G", "NR"]).range(["red", "orange", "green", "blue", "Black"]);
